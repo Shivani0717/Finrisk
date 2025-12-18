@@ -31,20 +31,20 @@ def create_stored_procedures():
                 SELECT 
                     p_date AS transaction_date,
                     COUNT(*)::BIGINT AS total_transactions,
-                    COUNT(*) FILTER (WHERE payment_status = 'SUCCESS')::BIGINT AS successful_transactions,
-                    COUNT(*) FILTER (WHERE payment_status = 'FAILED')::BIGINT AS failed_transactions,
-                    COUNT(*) FILTER (WHERE payment_status = 'PENDING')::BIGINT AS pending_transactions,
-                    COUNT(*) FILTER (WHERE payment_status = 'REFUNDED')::BIGINT AS refunded_transactions,
-                    COALESCE(SUM(amount), 0)::DECIMAL(15,2) AS total_amount,
+                    COUNT(*) FILTER (WHERE p.payment_status = 'SUCCESS')::BIGINT AS successful_transactions,
+                    COUNT(*) FILTER (WHERE p.payment_status = 'FAILED')::BIGINT AS failed_transactions,
+                    COUNT(*) FILTER (WHERE p.payment_status = 'PENDING')::BIGINT AS pending_transactions,
+                    COUNT(*) FILTER (WHERE p.payment_status = 'REFUNDED')::BIGINT AS refunded_transactions,
+                    COALESCE(SUM(p.amount), 0)::DECIMAL(15,2) AS total_amount,
                     CASE 
                         WHEN COUNT(*) > 0 THEN 
-                            ROUND((COUNT(*) FILTER (WHERE payment_status = 'SUCCESS')::DECIMAL / COUNT(*)::DECIMAL * 100), 2)
+                            ROUND((COUNT(*) FILTER (WHERE p.payment_status = 'SUCCESS')::DECIMAL / COUNT(*)::DECIMAL * 100), 2)
                         ELSE 0 
                     END AS success_rate,
-                    COALESCE(AVG(amount), 0)::DECIMAL(15,2) AS avg_transaction_amount,
-                    COALESCE(SUM(amount) FILTER (WHERE payment_status = 'SUCCESS'), 0)::DECIMAL(15,2) AS total_revenue
-                FROM payments
-                WHERE DATE(transaction_date) = p_date;
+                    COALESCE(AVG(p.amount), 0)::DECIMAL(15,2) AS avg_transaction_amount,
+                    COALESCE(SUM(p.amount) FILTER (WHERE p.payment_status = 'SUCCESS'), 0)::DECIMAL(15,2) AS total_revenue
+                FROM payments p
+                WHERE DATE(p.transaction_date) = p_date;
             END;
             $$ LANGUAGE plpgsql;
         """)
